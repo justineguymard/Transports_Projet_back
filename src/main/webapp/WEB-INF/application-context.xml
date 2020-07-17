@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-4.3.xsd
+						http://www.springframework.org/schema/tx 
+						http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!-- Activation des annotations d'injection de dépendances de spring IoC : @Value et @Autowired -->
+	
+	<context:annotation-config />
+	
+	<!-- Activation de la détection auto des composants : @Component, @Repository, @Service et @Controller -->
+	
+	<context:component-scan base-package="fr.inti" />
+	
+	<!-- Spécifier le chemin du fichier data_source -->
+	
+	<context:property-placeholder location="classpath*:data_source.properties" />
+	
+	<!--  Définir le bean Datasource -->
+	
+	<bean id="dataSourceBean" 
+		  class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+	
+			<!-- Injection de dépendances via les setters : spécifier les infos de la connexion à la BDD -->
+			
+			<property name="url" value="${jdbc.url}" />
+			<property name="driverClassName" value="${jdbc.driver}" />
+			<property name="username" value="${jdbc.user}" />
+			<property name="password" value="${jdbc.password}" />
+	
+	</bean>
+	
+	<!-- Définir le bean Session FActory -->
+	
+	<bean id="sessionFactoryBean" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+	
+	<!-- Injection du bean datasource via les setters -->
+	
+	<property name="dataSource" ref="dataSourceBean" />
+	
+	<!--  Spécifier les packages qui contiennes les classes persistantes pour qu'elles soient prises en compte par la session factory -->
+	
+	<property name="packagesToScan" value="fr.inti.entities" />
+	
+	<!--  Injecter les pros de hibernate -->
+	
+	<property name="hibernateProperties">
+		<props>
+			<prop key="hibernate.dialect">${hb.dialect}</prop>
+			<prop key="hibernate.hbm2ddl.auto">${hb.strategy}</prop>
+			<prop key="hibernate.show_sql">${hb.sql}</prop>
+		</props>
+	</property>
+	
+	</bean>
+	
+<!--  Définir le bean TransactionManager pur la gestion des transaction sql -->
+
+<bean id="transactionManagerBean" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+
+	<!-- Injection du collaborateur TransactionManagerBean via le setter -->
+	
+	<property name="sessionFactory" ref="sessionFactoryBean" />
+
+</bean>	
+
+<!-- Activation des annotations des transactions -->
+
+<tx:annotation-driven transaction-manager="transactionManagerBean" />
+
+</beans>
